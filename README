@@ -1,0 +1,29 @@
+README
+----------------
+
+This project implements a LSM enforcing CWLite policy. The sample LSM implementation is tested with Linux kernel version 2.6.23.
+
+Compilation:
+Place the sample.c and Makefile in the <linux-2.6.23 source>/security/ directory.
+Build the kernel and sample LSM
+
+Run sample LSM from security directory: sudo insmod sample.ko
+Check module loading: lsmod | grep sample
+Unload module: sudo rmmod sample
+
+Testing:
+Assign labeles "trusted", "untrusted", "ignore" to processes and files: setfattr -n security.sample -v <label> <file/process>
+
+Test code in the test directory.
+Files marked "trusted" while testing: [$ ./user_test trfile trfile]
+1) user_test (test binary)
+2) trfile
+- Logged at log_trusted.txt
+- Expected log : Allowed with both CWL ON and OFF
+
+Files marked "untrusted" while testing: [$ ./user_test utrfile utrfile]
+1) utrfile
+- Logged at log_untrusted.txt
+- Expected log : Allowed with CWL ON and blocked with CWL OFF
+
+
