@@ -82,6 +82,11 @@ MODULE_LICENSE("GPL");
 #define MAY_WRITE 2
 #define MAY_WRITE_EXEC 3
 
+/* Blocking return codes */
+#define ALLOW_OP 0
+#define BIBA_NO_WRITE_UP 1
+#define NO_CWL_NO_READ_DOWN 2
+
 
 extern struct security_operations *security_ops;
 /*
@@ -104,14 +109,14 @@ static int security_context_to_sid(char *context, u32 *sid)
 
 	if (strcmp(context, "untrusted") == 0) {
 		*sid = SAMPLE_UNTRUSTED;
-#if 1
+#if 0
 		printk(KERN_WARNING "%s: have UN-Trusted context: %s\n",
 		       __FUNCTION__, context);
 #endif
 	}
 	else if (strcmp(context, "trusted") == 0) {
 		*sid = SAMPLE_TRUSTED;
-#if 1
+#if 0
 		printk(KERN_WARNING "%s: have Trusted context: %s\n",
 		       __FUNCTION__, context);
 #endif
@@ -140,8 +145,20 @@ static int has_perm(u32 ssid_full, u32 osid, u32 ops)
 		       __FUNCTION__, ssid, cwl, osid, ops);
 #endif
 	/* YOUR CODE: CW-Lite Authorization Rules */
-        if (ssid && osid)
-	  return 0;
+        if (ssid && osid) {
+		/* Block untrusted process from modifying trusted object */
+		if (((ops & MAY_WRITE) > 0 || (ops & MAY_APPEND) > 0) &&
+			ssid == SAMPLE_UNTRUSTED && osid == SAMPLE_TRUSTED)
+			return BIBA_NO_WRITE_UP; // Block
+		
+		/* Block trusted process from reading untrusted object when CWL is OFF */
+		if (((ops & MAY_READ) > 0 || (ops & MAY_EXEC) > 0) && cwl == 0 &&
+			ssid == SAMPLE_TRUSTED && osid == SAMPLE_UNTRUSTED)
+			return NO_CWL_NO_READ_DOWN; // Block
+
+		/* Allow all other operations */
+		return ALLOW_OP;
+	}
         /* Other processes - allow */
         else return 0;
 
@@ -287,7 +304,7 @@ static int inode_has_perm(struct task_struct *task,
 	}
 
 /* YOUR CODE: do authorize */
-
+	rtn = has_perm(ssid, osid, ops);
 
 /* Then, use this code to print relevant denials: for our processes or on our objects */
 	if (( ssid && osid ) && rtn ) {
@@ -353,7 +370,7 @@ static int sample_bprm_set_security(struct linux_binprm *bprm)
 
 	/* YOUR CODE: Determine the label for the new process */
 	u32 osid = get_inode_sid(inode);
-
+	
 /* if the inode's sid indicates trusted or untrusted, then set 
    task->security */
 	if (osid) {
@@ -372,7 +389,7 @@ static int sample_inode_init_security(struct inode *inode, struct inode *dir,
 {
 	u32 ssid = get_task_sid(current);
 	u32 actual_ssid = 0xfffffff & ssid;
-	char *namep, *valuep;
+	char *namep, *valuep = 0;
 
 	if (!inode || !dir)
 		return -EOPNOTSUPP;
@@ -414,7 +431,7 @@ static int sample_inode_init_security(struct inode *inode, struct inode *dir,
 int sample_inode_setxattr (struct dentry *dentry, char *name, void *value,
 				      size_t size, int flags)
 {
-	struct inode *inode;
+	struct inode *inode = (struct inode *)NULL;
 	u32 mask = MAY_WRITE;
 	struct vfsmount *mnt = (struct vfsmount *)NULL;
 	u32 ssid, osid;
@@ -434,6 +451,7 @@ int sample_inode_setxattr (struct dentry *dentry, char *name, void *value,
 	inode = dentry->d_inode;
 	ssid = get_task_sid(current);
 	osid = get_inode_sid(inode);
+	if (inode == NULL) return 0;
 
 /* record attribute setting request before authorization */
 	if (ssid && osid) {
@@ -474,7 +492,7 @@ int sample_inode_create (struct inode *inode, struct dentry *dentry,
 
 int sample_file_permission (struct file *file, int mask)
 {
-        struct inode *inode;
+        struct inode *inode = (struct inode *)NULL;
 	struct vfsmount *mnt = (struct vfsmount *)NULL;
 	struct dentry *dentry = (struct dentry *)NULL;
 	int rtn;
@@ -493,6 +511,14 @@ int sample_file_permission (struct file *file, int mask)
 	}
 
 	/* YOUR CODE: Collect arguments for call to inode_has_perm */
+	inode = file->f_dentry->d_inode;
+	mnt = file->f_vfsmnt;
+	dentry = file->f_dentry;	
+
+	/* Fix kernel panic error: if inode is NULL, return 0 */
+	if (inode == NULL) return 0;
+
+
 
 	if ( current->security ) {  // ssid
 #if 0
@@ -710,36 +736,36 @@ static struct security_operations sample_ops = {
 };
 
 static struct dentry *cwl_debugfs_root;
-static struct dentry *d_cwl;
+//static struct dentry *d_cwl; // Unused
 static struct dentry *d_cwlite;
-static u8 a = 0;
+//static u8 a = 0; // Unused
 
 
 static size_t cwlite_read(struct file *filp, char __user *buffer, 
 				size_t count, loff_t *ppos)
 {
 	/* YOUR CODE: for reading the CW-Lite value from the kernel */
-    int value = (int)((0x10000000 & (u32)current->security) >> 28);
-
-#if 1
-    printk(KERN_INFO "%s: CW-Lite value %d\n",
-        __FUNCTION__, value);
+	int value = (int)((0x10000000 & (u32)current->security) >> 28);
+	
+#if 0
+	printk(KERN_INFO "%s: CW-Lite value %d\n",
+                        __FUNCTION__, value);
 #endif
 
 	switch (value) {
 	case 0:
-			if (copy_to_user(buffer, "0", count))
-					return -EFAULT;
-			break;
-	case 1:
-			if (copy_to_user(buffer, "1", count))
-					return -EFAULT;
-			break;
+		if (copy_to_user(buffer, "0", count))
+			return -EFAULT;
+		break;
+	case 1:	
+		if (copy_to_user(buffer, "1", count))
+			return -EFAULT;
+		break;
 	default:
-			printk(KERN_INFO "%s: invalid CW-Lite value %d\n",
-					__FUNCTION__, value);
-			return -EINVAL;
-			break;
+		printk(KERN_INFO "%s: invalid CW-Lite value %d\n",
+                        __FUNCTION__, value);
+                return -EINVAL;
+                break;
 	}
 
 	return count;
@@ -752,25 +778,25 @@ static ssize_t cwlite_write(struct file *filp, const char __user *buffer,
         int new_value;
 
 	/* YOUR CODE: for collecting value to write from user space */
-		char value[2];
+	char value[2];
+	
+	if (copy_from_user(value, buffer, count))
+        	return -EFAULT;
 
-		if (copy_from_user(value, buffer, count))
-			return -EFAULT;
-
-#if 1
-		printk(KERN_INFO "%s: CW-Lite value %s\n",
-						__FUNCTION__, value);
+#if 0
+        printk(KERN_INFO "%s: CW-Lite value %s\n",
+                        __FUNCTION__, value);
 #endif
 
-		if (value[0] == '0' || value[0] == '1')
-				new_value = (int)value[0] - 48;
-		else
-		{
-				printk(KERN_INFO "%s: invalid CW-Lite value %s\n",
-						__FUNCTION__, value);
-				return -EINVAL;
-		}
-
+	if (value[0] == '0' || value[0] == '1')
+		new_value = (int)value[0] - 48;
+	else
+	{
+		printk(KERN_INFO "%s: invalid CW-Lite value %s\n",
+                        __FUNCTION__, value);
+                return -EINVAL;
+	}
+	
 
         // get current
         // set flag on task
@@ -792,7 +818,7 @@ static ssize_t cwlite_write(struct file *filp, const char __user *buffer,
 		break;
         }
 
-out:
+//out: // Unused
         return count;
 }
 
@@ -820,15 +846,14 @@ static __init int sample_init(void)
 	}
 
 	/* YOUR CODE: Create debugfs file "cwlite" under "cwl" directory */
-	d_cwl = debugfs_create_file("cwlite", 0664, cwl_debugfs_root, NULL, &cwlite_ops);
-	if (!d_cwl) {
+	d_cwlite = debugfs_create_file("cwlite", 0666, cwl_debugfs_root, NULL, &cwlite_ops);
+	if (!d_cwlite) {
 		printk(KERN_INFO "Sample: Creating debugfs 'cwlite' file failed\n");
-			return -ENOENT;
+		goto Fail;
 	}
 
-
         printk(KERN_INFO "Sample:  Debugfs created: cwl: 0x%x, cwlite: 0x%x.\n",
-		cwl_debugfs_root, d_cwl);
+		cwl_debugfs_root, d_cwlite);
 
         return 0;
 
