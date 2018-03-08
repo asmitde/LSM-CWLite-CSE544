@@ -1,0 +1,17 @@
+[255443.401141] Sample:  Initializing.
+[255443.401176] Sample:  Debugfs created: cwl: 0x53481c30, cwlite: 0x534814e0.
+[255964.698976] sample_bprm_set_security: set task pid=32117 of ssid 0x2
+[255964.699005] inode_has_perm: target task pid=32117 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/user_test)
+[255964.700423] inode_has_perm: target task pid=32117 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/user_test)
+[255964.700884] inode_has_perm: target task pid=32117 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/user_test)
+[255964.701541] inode_has_perm: target task pid=32117 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:unk?)
+[255964.703092] sample: New security setting (0): pid=32117, sec=0x2
+[255964.703423] inode_has_perm: task pid=32117 of ssid 0x2 NOT authorized (2) for inode osid 0x1 (file:/home/cse544/p2/p2-user/utrfile) for ops 0x4
+[255964.703952] inode_has_perm: task pid=32117 of ssid 0x2 NOT authorized (2) for inode osid 0x1 (file:/home/cse544/p2/p2-user/utrfile) for ops 0x4
+[255964.704485] sample: New security setting (1): pid=32117, sec=0x10000002
+[255964.705174] inode_has_perm: target task pid=32117 of ssid 0x10000002 authorized for inode osid:ops 0x1:0x4 (file:/home/cse544/p2/p2-user/utrfile)
+[255964.706090] sample: New security setting (0): pid=32117, sec=0x2
+[255964.706836] sample: New security setting (1): pid=32117, sec=0x10000002
+[255964.707604] inode_has_perm: target task pid=32117 of ssid 0x10000002 authorized for inode osid:ops 0x1:0x4 (file:/home/cse544/p2/p2-user/utrfile)
+[255964.709039] sample: New security setting (0): pid=32117, sec=0x2
+[255964.709770] inode_has_perm: task pid=32117 of ssid 0x2 NOT authorized (2) for inode osid 0x1 (file:/home/cse544/p2/p2-user/utrfile) for ops 0x4

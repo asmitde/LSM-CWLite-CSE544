@@ -1,0 +1,15 @@
+[256516.525444] sample_bprm_set_security: set task pid=32119 of ssid 0x2
+[256516.525478] inode_has_perm: target task pid=32119 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/user_test)
+[256516.527943] inode_has_perm: target task pid=32119 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/user_test)
+[256516.529863] inode_has_perm: target task pid=32119 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/user_test)
+[256516.531277] inode_has_perm: target task pid=32119 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:unk?)
+[256516.533031] sample: New security setting (0): pid=32119, sec=0x2
+[256516.533363] inode_has_perm: target task pid=32119 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/trfile)
+[256516.533825] inode_has_perm: target task pid=32119 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/trfile)
+[256516.534328] sample: New security setting (1): pid=32119, sec=0x10000002
+[256516.534736] inode_has_perm: target task pid=32119 of ssid 0x10000002 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/trfile)
+[256516.535519] sample: New security setting (0): pid=32119, sec=0x2
+[256516.536171] sample: New security setting (1): pid=32119, sec=0x10000002
+[256516.536861] inode_has_perm: target task pid=32119 of ssid 0x10000002 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/trfile)
+[256516.538111] sample: New security setting (0): pid=32119, sec=0x2
+[256516.538745] inode_has_perm: target task pid=32119 of ssid 0x2 authorized for inode osid:ops 0x2:0x4 (file:/home/cse544/p2/p2-user/trfile)
